@@ -1,34 +1,54 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import { getImages } from './api';
+// import { getImages } from './api';
+import ImageApi from './api';
+import LoadMoreBtn from './load-more-btn';
 
 const searchForm = document.getElementById('search-form');
 const gallery = document.querySelector('.gallery');
+const imageApi = new ImageApi();
+const loadMoreBtn = new LoadMoreBtn({
+  selector: '.load-more',
+  isHidden: true,
+});
+imageApi.searchQuery = '';
 
 searchForm.addEventListener('submit', onFormSubmit);
+loadMoreBtn.button.addEventListener('click', fetchImages);
 
 function onFormSubmit(event) {
   event.preventDefault();
   console.log(event);
 
-  const imageName = event.target.elements[0].value;
-  console.log('🚀 ~ onFormSubmit ~ imageName', imageName);
+  imageApi.searchQuery = event.currentTarget.elements.searchQuery.value.trim();
 
-  if (imageName) {
-    return getImages(imageName).then(data => {
-      console.log(data);
-      searchImages(data);
-    });
-  }
+  imageApi.resetPage();
+  clearGallery();
+
+  fetchImages();
+
   searchForm.reset();
 }
 
+function fetchImages() {
+  return imageApi.getImages().then(data => {
+    console.log(data);
+    searchImages(data);
+
+    // Notify.success(`Hooray! We found ${data.totalHits} images.`);
+  });
+}
+
 function searchImages(imagesArray) {
-  if (imagesArray.hits.length === 0) {
-    Notify.info(
+  loadMoreBtn.hide();
+  if (imagesArray.hits.length === 0 || imageApi.searchQuery === '') {
+    return Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
     );
   }
+
   renderedMarkupImages(imagesArray);
+  loadMoreBtn.show();
+  // updateImagesGallery();
 }
 
 function renderedMarkupImages({ hits }) {
@@ -53,3 +73,13 @@ function renderedMarkupImages({ hits }) {
   });
   gallery.innerHTML = markup;
 }
+
+function clearGallery() {
+  gallery.innerHTML = '';
+}
+
+// function updateImagesGallery() {
+//   gallery.insertAdjacentHTML('beforeend', );
+// }
+
+function onError(error) {}
