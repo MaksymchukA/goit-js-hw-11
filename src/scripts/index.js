@@ -29,7 +29,7 @@ function onFormSubmit(event) {
 
   fetchImages();
 
-  searchForm.reset();
+  // searchForm.reset();
 }
 
 async function fetchImages() {
