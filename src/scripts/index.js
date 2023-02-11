@@ -1,4 +1,6 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 import ImageApi from './api';
 import LoadMoreBtn from './load-more-btn';
 
@@ -9,6 +11,14 @@ const imageApi = new ImageApi();
 const loadMoreBtn = new LoadMoreBtn({
   selector: '.load-more',
   isHidden: true,
+});
+
+// Додати відображення великої версії зображення з бібліотекою SimpleLightbox для повноцінної галереї.
+
+let lightboxGalllery = new SimpleLightbox('.gallery a', {
+  captions: true,
+  captionsData: 'alt',
+  captionDelay: 250,
 });
 
 searchForm.addEventListener('submit', onFormSubmit);
@@ -39,6 +49,7 @@ async function fetchImages() {
   const data = await imageApi.getImages();
   console.log(data);
   searchImages(data);
+
   return data;
 }
 
@@ -80,10 +91,9 @@ function renderedMarkupImages({ hits }) {
   const markup = hits
     .map(hit => {
       return `
+      <a href="${hit.largeImageURL}">
     <div class="photo-card">
-    <a href="${hit.largeImageURL}">
     <img src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" />
-    </a>
     <div class="info">
     <p class="info-item">
       <b>Likes ${hit.likes}</b>
@@ -99,12 +109,30 @@ function renderedMarkupImages({ hits }) {
     </p>
     </div>
     </div>
+    </a>
     `;
     })
     .join('');
   gallery.insertAdjacentHTML('beforeend', markup);
+
+  lightboxGalllery.refresh();
+
+  smoothScroll();
 }
 
 function clearGallery() {
   gallery.innerHTML = '';
+}
+
+// Зробити плавне прокручування сторінки після запиту і відтворення кожної наступної групи зображень.
+
+function smoothScroll() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
 }
